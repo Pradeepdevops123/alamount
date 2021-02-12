@@ -1,0 +1,284 @@
+Transform: AWS::Serverless-2016-10-31
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters:
+  HashKeyElementName:
+    Type: String
+    Default: id
+    Description: Hash Key Name
+  HashKeyElementType:
+    Type: String
+    Default: S
+    Description: Hash Key Type
+  TableName:
+    Type: String
+    Description: DynamoDB Table Name
+    AllowedPattern: '^([a-z0-9]{1}[a-z0-9-]{1,61}[a-z0-9]{1})$'
+    Default: connection
+  TaskDBStreamARN:
+    Type: String
+    Description: DynamoDB Table Stream ARN
+
+Resources :
+    RestGateway :
+        Type : AWS::ApiGateway::RestApi
+        Properties :
+            Name : Alamont Gateway
+            Description: Alamont API deployed using CFT
+            Parameters:
+                endpointConfigurationTypes: REGIONAL        
+            Body:
+                openapi: 3.0.1
+                info:
+                  version: 1.0.0
+                  title: Alamont Gateway
+                  description: Alamont API deployed using CFT
+                paths:
+                  /connections/{id}:
+                    put:
+                      parameters:
+                      - name: "id"
+                        in: "path"
+                        required: true
+                        schema:
+                          type: "string"
+                      requestBody:
+                        content:
+                          application/json:
+                            schema:
+                              $ref: "#/components/schemas/Connection"
+                        required: true
+                      responses:
+                        "200":
+                          description: "200 response"
+                          headers:
+                            Access-Control-Allow-Origin:
+                              schema:
+                                type: "string"
+                          content: {}
+                        "204":
+                          description: "204 response"
+                          headers:
+                            Access-Control-Allow-Origin:
+                              schema:
+                                type: "string"
+                          content: {}
+                      x-amazon-apigateway-integration:
+                        credentials: "arn:aws:iam::948478278077:role/api-dd"
+                        uri: "arn:aws:apigateway:us-east-2:dynamodb:action/PutItem"
+                        httpMethod: "POST"
+                        responses:
+                          default:
+                            statusCode: "200"
+                            responseParameters:
+                              method.response.header.Access-Control-Allow-Origin: "'*'"
+                            responseTemplates:
+                              application/json: "{\"statusCode\": 200}"
+                        requestTemplates:
+                          application/json: "{ \r\n    \"TableName\": \"connections\",\r\n    \"Item\"\
+                            : {\r\n     \"id\": {\r\n            \"S\": \"$input.params('id')\"\r\n\
+                            \        },\r\n        \"cpmConnectionId\": {\r\n            \"S\": \"\
+                            $input.path('$.cpmConnectionId')\"\r\n            },\r\n        \"alamontId\"\
+                            : {\r\n            \"S\": \"$input.path('$.alamontId')\"\r\n        },\r\
+                            \n        \"cpmId\": {\r\n            \"S\": \"$input.path('$.cpmId')\"\
+                            \r\n        },\r\n        \"cpmClientName\": {\r\n            \"S\": \"\
+                            $input.path('$.cpmClientName')\"\r\n        },\r\n        \"nonce\": {\r\
+                            \n            \"S\": \"$input.path('$.nonce')\"\r\n        }\r\n    }\r\
+                            \n}\r\n"
+                        passthroughBehavior: "when_no_templates"
+                        type: "aws"
+                    options:
+                      responses:
+                        "200":
+                          description: "200 response"
+                          headers:
+                            Access-Control-Allow-Origin:
+                              schema:
+                                type: "string"
+                            Access-Control-Allow-Methods:
+                              schema:
+                                type: "string"
+                            Access-Control-Allow-Headers:
+                              schema:
+                                type: "string"
+                          content: {}
+                      x-amazon-apigateway-integration:
+                        responses:
+                          default:
+                            statusCode: "200"
+                            responseParameters:
+                              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,PUT'"
+                              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+                              method.response.header.Access-Control-Allow-Origin: "'*'"
+                        requestTemplates:
+                          application/json: "{\"statusCode\": 200}"
+                        passthroughBehavior: "when_no_match"
+                        type: "mock"
+                  /connections:
+                    get:
+                      responses:
+                        "200":
+                          description: "200 response"
+                          headers:
+                            Access-Control-Allow-Origin:
+                              schema:
+                                type: "string"
+                          content:
+                            application/json:
+                              schema:
+                                $ref: "#/components/schemas/ArrayOfConnection"
+                      x-amazon-apigateway-integration:
+                        credentials: "arn:aws:iam::948478278077:role/api-dd"
+                        uri: "arn:aws:apigateway:us-east-2:dynamodb:action/Scan"
+                        httpMethod: "POST"
+                        responses:
+                          default:
+                            statusCode: "200"
+                            responseParameters:
+                              method.response.header.Access-Control-Allow-Origin: "'*'"
+                            responseTemplates:
+                              application/json: "#set($inputRoot = $input.path('$'))\r\n{\r\n    \"\
+                                tasks\": [\r\n        #foreach($elem in $inputRoot.Items) {\r\n  \
+                                \          \"id\": \"$elem.id.S\",\r\n            \"cpmConnectionId\"\
+                                : \"$elem.cpmConnectionId.S\",\r\n            \"alamontId\": \"$elem.alamontId.S\"\
+                                ,\r\n            \"cpmId\": \"$elem.cpmId.S\",\r\n            \"cpmClientName\"\
+                                : \"$elem.cpmClientName.S\",\r\n            \"nonce\": \"$elem.nonce.S\"\
+                                \r\n        }#if($foreach.hasNext),#end\r\n #end\r\n    ]\r\n}"
+                        requestTemplates:
+                          application/json: "{\r\n    \"TableName\": \"connections\"\r\n}"
+                        passthroughBehavior: "when_no_templates"
+                        type: "aws"
+                    options:
+                      x-amazon-apigateway-integration:
+                        responses:
+                          default:
+                            statusCode: "200"
+                        requestTemplates:
+                          application/json: "{\"statusCode\": 200}"
+                        passthroughBehavior: "when_no_match"
+                        type: "mock"
+                components:
+                  schemas:
+                    ArrayOfConnection:
+                      type: "array"
+                      items:
+                        $ref: "#/components/schemas/Connection"
+                    Connection:
+                      required:
+                      - "alamontId"
+                      - "cmpConnectionId"
+                      - "cmpId"
+                      - "id"
+                      type: "object"
+                      properties:
+                        id:
+                          type: "string"
+                        cpmConnectionId:
+                          type: "string"
+                        alamontId:
+                          type: "string"
+                        cpmId:
+                          type: "string"
+                        cpmClientName:
+                          type: "string"
+                        nonce:
+                          type: "string"
+    DeploymentRestApi:
+      Type: 'AWS::ApiGateway::Deployment'
+      Properties:
+        RestApiId: !Ref RestGateway
+        Description: deployment of a Alamont Gateway Rest API
+        StageName: beta
+    TaskFunction:
+        Type: AWS::Serverless::Function
+        Properties:
+          CodeUri: srctask/
+          Handler: index.handler
+          Role:
+            Fn::GetAtt: [ LambdaRole , Arn ]
+          Runtime: nodejs12.x
+          Timeout: 300
+          FunctionName: checkPointWorkercft
+    ConnectionFunction:
+        Type: AWS::Serverless::Function
+        Properties:
+          CodeUri: srcconnection/
+          Handler: index.handler
+          Role:
+            Fn::GetAtt: [ LambdaRole , Arn ]
+          Runtime: nodejs12.x
+          Timeout: 300
+          FunctionName: clientConnectionWorkercft
+    LambdaRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - lambda.amazonaws.com
+            Action:
+            - sts:AssumeRole
+        Path: "/"
+        Policies:
+          - PolicyName: LambdaRolePolicy
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+              - Effect: Allow
+                Action:
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:*
+              - Effect: Allow
+                Action:
+                - dynamodb:*
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                - execute-api:Invoke
+                - execute-api:ManageConnections
+                Resource: "arn:aws:execute-api:*:*:*"             
+    DynamoDB:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: !Ref TableName
+        AttributeDefinitions:
+          - 
+            AttributeName: !Ref HashKeyElementName
+            AttributeType: !Ref HashKeyElementType
+        KeySchema:
+          - 
+            AttributeName: !Ref HashKeyElementName
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+        StreamSpecification:
+          StreamViewType: NEW_IMAGE
+    TaskTableStream:
+      Type: AWS::Lambda::EventSourceMapping
+      Properties:
+        BatchSize: 100
+        Enabled: True
+        EventSourceArn: !Ref TaskDBStreamARN
+        FunctionName:
+          Fn::GetAtt: [ TaskFunction , Arn ]
+        StartingPosition: LATEST
+    ConnectionTableStream:
+      Type: AWS::Lambda::EventSourceMapping
+      Properties:
+        BatchSize: 100
+        Enabled: True
+        EventSourceArn:
+          Fn::GetAtt: [ DynamoDB , StreamArn ]
+        FunctionName:
+          Fn::GetAtt: [ ConnectionFunction , Arn ]
+        StartingPosition: LATEST
+Outputs:
+  RestApiEndpoint:
+    Description: "RestGateway stage endpoint"
+    Value: !Sub "https://${RestGateway}.execute-api.${AWS::Region}.amazonaws.com/beta/"

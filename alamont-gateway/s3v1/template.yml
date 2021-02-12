@@ -1,0 +1,109 @@
+Transform: AWS::Serverless-2016-10-31
+AWSTemplateFormatVersion: 2010-09-09
+Metadata:
+  Purpose:
+    Description: >-
+      This template is used to create a single S3 bucket for basic object
+      storage. Parameters  provide the ability to use S3 canned ACLs, enable
+      default encryption (with or without a custom KMS Key) and enable object
+      versioning.  On successful resource creation both the  bucket url and arn
+      will be exported and available for import in other CloudFormation 
+      templates.
+  'AWS::CloudFormation::Interface':
+    ParameterGroups:
+      - Label:
+          default: S3 Bucket Configuration Parameters
+        Parameters:
+          - BucketName
+          - ACL
+          - Versioning
+
+    ParameterLabels:
+      BucketName:
+        default: S3 Bucket Name
+      ACL:
+        default: Bucket Access Control List
+      Versioning:
+        default: Object Versioning
+
+Parameters:
+  ACL:
+    Type: String
+    Description: >-
+      Would you like to apply a canned access control list to grant predefined
+      permissions?
+    AllowedValues:
+      - Private
+      - PublicRead
+      - PublicReadWrite
+      - AwsExecRead
+      - AuthenticatedRead
+      - BucketOwnerRead
+      - BucketOwnerFullControl
+      - LogDeliveryWrite
+      - None
+    Default: None
+  BucketName:
+    Type: String
+    Description: What name would you like to use for the S3 Bucket?
+    AllowedPattern: '^([a-z0-9]{1}[a-z0-9-]{1,61}[a-z0-9]{1})$'
+    ConstraintDescription: >-
+      Bucket names must start and end with a letter or number, and be between 3
+      and 63 characters in length.
+  Versioning:
+    Type: String
+    Description: Would you like to enable versioning for objects in the S3 Bucket?
+    AllowedValues:
+      - Enabled
+      - Suspended
+    Default: Suspended
+Conditions:
+  hasACL: !Not 
+    - !Equals 
+      - !Ref ACL
+      - None
+Resources:
+  Bucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      AccessControl: !If 
+        - hasACL
+        - !Ref ACL
+        - !Ref 'AWS::NoValue'
+      BucketName: !Ref BucketName
+      VersioningConfiguration:
+        Status: !Ref Versioning
+  SampleBucketPolicy:
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      Bucket: !Ref Bucket
+      PolicyDocument:
+        Statement:
+          - Action:
+              - 's3:GetObject'
+            Effect: Allow
+            Resource: !Join
+              - ''
+              - - 'arn:aws:s3:::'
+                - !Ref Bucket
+                - /*
+            Principal: '*'
+
+Outputs:
+  BucketURL:
+    Value: !Join 
+      - ''
+      - - 'https://'
+        - !GetAtt Bucket.DomainName
+    Export:
+      Name: !Join 
+        - ''
+        - - !Ref 'AWS::StackName'
+          - BucketURL
+  BucketARN:
+    Value: !GetAtt Bucket.Arn
+    Export:
+      Name: !Join 
+        - ''
+        - - !Ref 'AWS::StackName'
+          - BucketARN

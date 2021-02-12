@@ -1,0 +1,102 @@
+Pre-requisite:
+    git clone https://github.com/Pradeepdevops123/pradeep.git
+    cd pradeep/
+    
+
+create a bucket for Alamont Application:
+    cd alamont-application/s3v1/
+    sam deploy --guided
+        Stack Name [sam-app]: alamont-application-s3-cft
+        AWS Region [us-east-1]: us-east-2
+        Parameter ACL [None]: ENTER
+        Parameter BucketName []: alamont-application-cft
+        Parameter Versioning [Suspended]: ENTER
+        Confirm changes before deploy [y/N]: y
+        Allow SAM CLI IAM role creation [Y/n]: Y
+        Save arguments to configuration file [Y/n]: Y
+        SAM configuration file [samconfig.toml]: ENTER
+        SAM configuration environment [default]: ENTER
+        
+        Deploy this changeset? [y/N]: y
+            output: Successfully created/updated stack - alamont-application-s3-cft in us-east-2
+Update a bucket for Alamont Application:
+    cd ../s3v2/
+    sam deploy --guided
+        Stack Name [alamont-application-cft]: alamont-application-s3-cft
+        AWS Region [us-east-1]: us-east-2
+        Parameter ACL [None]: ENTER
+        Parameter BucketName []: alamont-application-cft
+        Parameter Versioning [Suspended]: ENTER
+        Confirm changes before deploy [y/N]: y
+        Allow SAM CLI IAM role creation [Y/n]: Y
+        Save arguments to configuration file [Y/n]: Y
+        SAM configuration file [samconfig.toml]: ENTER
+        SAM configuration environment [default]: ENTER
+        
+        Deploy this changeset? [y/N]: y
+            output: Successfully created/updated stack - alamont-application-s3-cft in us-east-2
+Create Alamont Application:
+    cd ../
+    sam deploy --guided
+        Stack Name : alamont-application
+        AWS Region : us-east-2
+        Parameter HashKeyElementName [id]: ENTER
+        Parameter HashKeyElementType [S]: ENTER
+        Parameter TableName [task]: task
+        Confirm changes before deploy [y/N]: y
+        Allow SAM CLI IAM role creation [Y/n]: Y
+        Save arguments to configuration file [Y/n]: Y
+        SAM configuration file [samconfig.toml]: ENTER
+        SAM configuration environment [default]: ENTER
+        
+        Deploy this changeset? [y/N]: y
+            output: Successfully created/updated stack - alamont-application in us-east-2
+            
+create a bucket for Alamont Gateway:
+    cd ../alamont-gateway/s3v1/
+    sam deploy --guided
+        Stack Name: alamont-gateway-s3-cft
+        AWS Region : us-east-2
+        Parameter ACL [None]: ENTER
+        Parameter BucketName []: alamont-gateway-cft
+        Parameter Versioning [Suspended]: ENTER
+        Confirm changes before deploy [y/N]: y
+        Allow SAM CLI IAM role creation [Y/n]: Y
+        Save arguments to configuration file [Y/n]: Y
+        SAM configuration file [samconfig.toml]: ENTER
+        SAM configuration environment [default]: ENTER
+        
+        Deploy this changeset? [y/N]: y
+            output: Successfully created/updated stack - alamont-gateway-s3-cft in us-east-2
+Update a bucket for Alamont Application:
+    cd ../s3v2/
+    sam deploy --guided
+        Stack Name : alamont-gateway-s3-cft
+        AWS Region [us-east-1]: us-east-2
+        Parameter ACL [None]: ENTER
+        Parameter BucketName []: alamont-gateway-cft
+        Parameter Versioning [Suspended]: ENTER
+        Confirm changes before deploy [y/N]: y
+        Allow SAM CLI IAM role creation [Y/n]: Y
+        Save arguments to configuration file [Y/n]: Y
+        SAM configuration file [samconfig.toml]: ENTER
+        SAM configuration environment [default]: ENTER
+        
+        Deploy this changeset? [y/N]: y
+            output: Successfully created/updated stack - alamont-gateway-s3-cft in us-east-2
+Create Alamont Gateway:
+    cd ../
+    sam deploy --guided
+        Stack Name : alamont-Gateway
+        AWS Region [us-east-1]: us-east-2
+        Parameter TableName [connection]:
+        Parameter HashKeyElementName [id]: ENTER
+        Parameter HashKeyElementType [S]: ENTER
+        Parameter TableName [task]: connection
+        Parameter TaskDBStreamARN []: follow the below TIP to get the value
+        Confirm changes before deploy [y/N]: y
+        Allow SAM CLI IAM role creation [Y/n]: Y
+        Save arguments to configuration file [Y/n]: Y
+        SAM configuration file [samconfig.toml]: ENTER
+        SAM configuration environment [default]: ENTER
+TIP:  navigate to DynamoDB Console --> select table (task) --> go to 'DynamoDB stream details' --> copy value of 'Latest stream ARN' and paste in "Parameter TaskDBStreamARN"
